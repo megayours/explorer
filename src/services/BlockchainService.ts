@@ -229,8 +229,19 @@ export class BlockchainService {
         };
       }
 
-      // TODO Get the block by height
-      throw new Error('Not implemented');
+      const block = await adapter.getBlockByNumber(height);
+
+      if (!block.success) {
+        return {
+          success: false,
+          error: block.error
+        };
+      }
+      
+      return {
+        success: true,
+        block: block.data
+      };
     } catch (error) {
       console.error('Error getting block by number:', error);
       return {

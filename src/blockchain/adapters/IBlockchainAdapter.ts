@@ -12,7 +12,7 @@ export interface IBlockchainAdapter {
   // Basic blockchain operations
   getLatestBlock(): Promise<BlockchainOperationResult<number>>;
   getLatestSyncedBlock(): Promise<BlockchainOperationResult<number>>;
-  getBlockByNumber(blockNumber: number): Promise<BlockchainOperationResult<any>>;
+  getBlockByNumber(blockNumber: number): Promise<BlockchainOperationResult<Block>>;
   
   // RPC management
   addRpcUrl(url: string): Promise<BlockchainOperationResult<RpcUrl>>;

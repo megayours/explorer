@@ -4,6 +4,10 @@ import type { RpcUrl } from '../../models/RPC';
 import type { BlockchainOperationResult, IBlockchainAdapter } from './IBlockchainAdapter';
 import { BlockFactory } from '../entities/Block/BlockFactory';
 import { BlockchainType } from '../../models/Blockchain';
+import { MegachainBlock } from '../entities/Block/MegachainBlock';
+import { MegachainTransaction } from '../entities/Transaction/MegachainTransaction';
+import type { Transaction } from '../entities/Transaction/Transaction';
+
 export class MegachainAdapter implements IBlockchainAdapter {
   private blockchainId: number;
   private chainId: string;
@@ -69,17 +73,31 @@ export class MegachainAdapter implements IBlockchainAdapter {
     }
   }
 
-  async getBlockByNumber(blockNumber: number): Promise<BlockchainOperationResult<any>> {
+  async getBlockByNumber(blockNumber: number, includeTransactions = false): Promise<BlockchainOperationResult<Block>> {
+    const blockRaw = await sql`
+      SELECT * FROM megachain_blocks
+      WHERE blockchain_id = (SELECT id FROM blockchains WHERE chain_id = ${this.chainId} AND type = 'megachain')
+      AND height = ${blockNumber}
+    `;
+
+    if (blockRaw.length === 0) {
+      return {
+        success: false,
+        error: `Block ${blockNumber} not found`
+      };
+    }
+
+    const block = new MegachainBlock(blockRaw[0], this.chainId);
+    
+    // Only load transactions if requested
+    if (includeTransactions) {
+      await block.loadTransactions();
+    }
+    
     try {
-      // Megachain-specific block structure and retrieval logic
       return {
         success: true,
-        data: {
-          blockNumber: blockNumber,
-          timeCreated: new Date().toISOString(),
-          blockIdentifier: `mega-${blockNumber}-${this.chainId}`,
-          // Megachain-specific block properties would be here
-        }
+        data: block
       };
     } catch (error) {
       console.error(`Error fetching block ${blockNumber} from Megachain:`, error);
@@ -217,6 +235,37 @@ export class MegachainAdapter implements IBlockchainAdapter {
       return {
         success: false,
         error: 'Failed to track Megachain block'
+      };
+    }
+  }
+
+  async getBlockTransactions(blockNumber: number): Promise<BlockchainOperationResult<Transaction[]>> {
+    try {
+      const transactions = await sql`
+        SELECT t.* FROM megachain_transactions t
+        JOIN megachain_blocks b ON t.block_id = b.id
+        WHERE b.blockchain_id = (SELECT id FROM blockchains WHERE chain_id = ${this.chainId} AND type = 'megachain')
+        AND b.height = ${blockNumber}
+      `;
+      
+      if (transactions.length === 0) {
+        return {
+          success: true,
+          data: []
+        };
+      }
+      
+      const txObjects = transactions.map((tx: any) => new MegachainTransaction(tx));
+      
+      return {
+        success: true,
+        data: txObjects
+      };
+    } catch (error) {
+      console.error(`Error fetching transactions for block ${blockNumber}:`, error);
+      return {
+        success: false,
+        error: `Failed to fetch transactions for block ${blockNumber}`
       };
     }
   }

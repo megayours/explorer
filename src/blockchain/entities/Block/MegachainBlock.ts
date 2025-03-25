@@ -9,8 +9,9 @@ export class MegachainBlock extends Block {
   public rid: Buffer;
   public prevBlockRid: Buffer;
   public witness: Buffer;
-  public transactions: MegachainTransaction[];
+  public transactions: MegachainTransaction[] = [];
   public witnesses: Witness[];
+  private _transactionsLoaded: boolean = false;
 
   constructor(rawData: any, chainId: string) {
     super(rawData, chainId);
@@ -28,13 +29,20 @@ export class MegachainBlock extends Block {
         : rawData.witness;
     this.transactions = [];
 
-    for (const tx of rawData.transactions) {
+    // Only process transactions if they exist in the raw data
+    if (rawData.transactions && Array.isArray(rawData.transactions)) {
+      for (const tx of rawData.transactions) {
         this.transactions.push(new MegachainTransaction(tx));
+      }
+      this._transactionsLoaded = true; // Mark as loaded from raw data
     }
 
     this.witnesses = []
-    for (const witness of rawData.witnesses) {
+    // Only process witnesses if they exist in the raw data
+    if (rawData.witnesses && Array.isArray(rawData.witnesses)) {
+      for (const witness of rawData.witnesses) {
         this.witnesses.push(new Witness(witness));
+      }
     }
   }
   
@@ -153,6 +161,9 @@ export class MegachainBlock extends Block {
   }
 
   getTransactions(): Transaction[] {
+    if (!this._transactionsLoaded) {
+      return [];
+    }
     return this.transactions;
   }
 
@@ -205,5 +216,23 @@ export class MegachainBlock extends Block {
     }
   }
   
+  async loadTransactions(): Promise<boolean> {
 
+    throw new Error('Vibed, double check this');
+    if (this._transactionsLoaded) return true;
+    
+    try {
+      const transactions = await sql`
+        SELECT * FROM megachain_transactions 
+        WHERE block_id = ${this.id}
+      `;
+      
+      this.transactions = transactions.map((tx: any) => new MegachainTransaction(tx));
+      this._transactionsLoaded = true;
+      return true;
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      return false;
+    }
+  }
 } 
