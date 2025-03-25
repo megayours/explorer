@@ -1,0 +1,20 @@
+{
+  "name": "bun-ts-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "setup-db": "bun run src/database/setup.ts",
+    "reset-db": "bun run scripts/reset-database.ts",
+    "setup-blockchains": "bun run scripts/setup-blockchains.js"
+  },
+  "dependencies": {
+    "elysia": "^1.2.25",
+    "postchain-client": "^1.21.1"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.2.2"
+  }
+}
