@@ -11,6 +11,7 @@ export interface BlockchainOperationResult<T> {
 export interface IBlockchainAdapter {
   // Basic blockchain operations
   getLatestBlock(): Promise<BlockchainOperationResult<number>>;
+  getLatestSyncedBlock(): Promise<BlockchainOperationResult<number>>;
   getBlockByNumber(blockNumber: number): Promise<BlockchainOperationResult<any>>;
   
   // RPC management

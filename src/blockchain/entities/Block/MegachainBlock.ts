@@ -205,5 +205,5 @@ export class MegachainBlock extends Block {
     }
   }
   
-  // Add more Megachain-specific getters/methods here
+
 } 

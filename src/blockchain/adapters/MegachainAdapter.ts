@@ -16,16 +16,55 @@ export class MegachainAdapter implements IBlockchainAdapter {
   async getLatestBlock(): Promise<BlockchainOperationResult<number>> {
     try {
       // Megachain-specific implementation for getting latest block
-      // This would differ from EVM in real implementation
+      const rpcUrlsResult = await this.getRpcUrls();
+      if (!rpcUrlsResult.success || !rpcUrlsResult.data || rpcUrlsResult.data.length === 0) {
+        return {
+          success: false,
+          error: 'No RPC URLs available for this blockchain'
+        };
+      }
+      const latestBlockRequest = await fetch(`${rpcUrlsResult.data[0]!.url}/blocks/${this.chainId}?limit=1`);
+      const latestBlock = (await latestBlockRequest.json()) as [{ height: number }];
+      console.log("Block height", latestBlock[0].height);
+      
+      // Add type assertion or type guard
+      if (latestBlock && latestBlock.length > 0 && latestBlock[0].height) {
+        return {
+          success: true,
+          data: latestBlock[0].height
+        };
+      }
+      
       return {
-        success: true,
-        data: Math.floor(Date.now() / 1000) - 100 // Mock different logic
+        success: false,
+        error: 'Invalid response format from Megachain API'
       };
     } catch (error) {
       console.error('Error fetching latest block from Megachain:', error);
       return {
         success: false,
         error: 'Failed to fetch latest block from Megachain'
+      };
+    }
+  }
+
+  async getLatestSyncedBlock(): Promise<BlockchainOperationResult<number>> {
+    try{
+      console.log("Getting latest synced block for Megachain", this.chainId);
+      const latestSyncedBlock = await sql`
+        SELECT * FROM megachain_blocks
+        WHERE blockchain_id = (SELECT id FROM blockchains WHERE chain_id = ${this.chainId} AND type = 'megachain')
+      `;
+
+      return {
+        success: true,
+        data: latestSyncedBlock[0].height
+      }
+    } catch (error) {
+      console.error('Error fetching latest synced block from Megachain:', error);
+      return {
+        success: false,
+        error: 'Failed to fetch latest synced block from Megachain'
       };
     }
   }

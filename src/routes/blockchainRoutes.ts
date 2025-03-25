@@ -73,8 +73,16 @@ export const blockchainRoutes = new Elysia()
     params: blockchainParamsSchema
   }
 )
-.get('/api/blockchain/type/:type/id/:chainId/latest-block', async ({ params }) => {
-  return await blockchainService.getLatestBlock(params.type, params.chainId);
-}, {
+.get('/api/blockchain/type/:type/id/:chainId/latest-block', 
+  async ({ params }) => {
+    return await blockchainService.getLatestBlock(params.type, params.chainId);
+  }, {
+    params: blockchainParamsSchema
+  }
+)
+.get('/api/blockchain/type/:type/id/:chainId/latest-synced-block', 
+  async ({ params }) => {
+    return await blockchainService.getLatestSyncedBlock(params.type, params.chainId);
+  }, {
   params: blockchainParamsSchema
 }); 

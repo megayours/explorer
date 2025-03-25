@@ -32,6 +32,10 @@ export class EvmBlockchainAdapter implements IBlockchainAdapter {
     }
   }
 
+  async getLatestSyncedBlock(): Promise<BlockchainOperationResult<number>> {
+    throw new Error('Not implemented');
+  }
+
   async getBlockByNumber(blockNumber: number): Promise<BlockchainOperationResult<any>> {
     try {
       

@@ -272,6 +272,42 @@ export class BlockchainService {
       };
     }
   }
+
+  async getLatestSyncedBlock(type: string, chainId: string): Promise<{ success: boolean; height: number; error?: string }> {
+    try {
+      const adapter = await blockchainManager.getAdapter(type, chainId);
+      
+      if (!adapter) {
+        return {
+          success: false,
+          height: 0,
+          error: 'Blockchain not found'
+        };
+      }
+      
+      const result = await adapter.getLatestSyncedBlock();
+      
+      if (!result.success) {
+        return {
+          success: false,
+          height: 0,
+          error: result.error
+        };
+      }
+      
+      return {
+        success: true,
+        height: result.data || 0
+      };
+    } catch (error) {
+      console.error('Error getting latest synced block:', error);
+      return {
+        success: false,
+        height: 0,
+        error: 'Failed to get latest synced block'
+      };
+    }
+  } 
 }
 
 export default new BlockchainService(); 
